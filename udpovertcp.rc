@@ -1,0 +1,44 @@
+#
+# Run script for init.d based systems
+
+USER=root
+CONNECT_ADDR=
+LISTEN_ADDR=
+UDP_ADDR=localhost:20000
+BINARY=/usr/local/bin/udpovertcp
+PID_FILE=/var/run/udpovertcp.pid
+
+start() {
+    if [ "x$CONNECT_ADDR" != "x" ]; then
+        start-stop-daemon -S --pidfile "$PID_FILE" -x "$BINARY" -u "$USER" --background -m -- -connect "$CONNECT_ADDR" -udp "$UDP_ADDR"
+    else
+        start-stop-daemon -S --pidfile "$PID_FILE" -x "$BINARY" -u "$USER" --background -m -- -listen "$LISTEN_ADDR" -udp "$UDP_ADDR"
+    fi
+}
+
+stop() {
+    start-stop-daemon -K --pidfile "$PID_FILE" -x "$BINARY" -u "$USER" --background -m --oknodo
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    *)
+        echo "Invalid command $1"
+        exit 1
+        ;;
+esac
+

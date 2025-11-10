@@ -1,0 +1,12 @@
+[Unit]
+Description=UDP tunnel over TCP
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/udpovertcp -connect %REMOTE_ADDRESS% %UDP_ADDRESS%
+Type=simple
+Restart=on-failure
+User=%USER%
+
+[Install]
+WantedBy=multi-user.target
