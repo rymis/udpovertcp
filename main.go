@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/syslog"
 	"net"
 	"os"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 // Simple UDP over TCP application to set up Wireguard
 
+// Process connection on server side
 func processServerConnection(conn net.Conn, connect string, verbose bool) error {
 	raddr, err := net.ResolveUDPAddr("udp", connect)
 	if err != nil {
@@ -31,6 +33,7 @@ func processServerConnection(conn net.Conn, connect string, verbose bool) error 
 	return processUdpIncomingPackets(conn, udp, raddr, verbose)
 }
 
+// Server main function
 func processServer(listen, connect string, verbose bool) error {
 	tcp, err := net.Listen("tcp", listen)
 	if err != nil {
@@ -53,6 +56,7 @@ func processServer(listen, connect string, verbose bool) error {
 	}
 }
 
+// Client main function
 func processClient(connect, listen string, verbose bool) error {
 	tcp, err := net.Dial("tcp", connect)
 	if err != nil {
@@ -71,6 +75,7 @@ func processClient(connect, listen string, verbose bool) error {
 	return processUdpIncomingPackets(tcp, udp, nil, verbose)
 }
 
+// Process incoming UDP packages
 func processUdpIncomingPackets(tcp net.Conn, udp net.PacketConn, addr net.Addr, verbose bool) error {
 	var udpBuf [8192]byte
 	var lenBuf [2]byte
@@ -126,6 +131,7 @@ func processUdpIncomingPackets(tcp net.Conn, udp net.PacketConn, addr net.Addr, 
 	}
 }
 
+// Process outgoing UDP packages
 func processUdpOutgoingPackets(tcp net.Conn, udp net.PacketConn, addr net.Addr, verbose bool) error {
 	var lenBuf [2]byte
 	var dataBuf [8192]byte
@@ -178,8 +184,19 @@ func main() {
 	connectAddr := flag.String("connect", "", "Connect to specified address")
 	udpAddr := flag.String("udp", "127.0.0.1:20000", "Listen/connect on/to specified UDP address")
 	verbose := flag.Bool("verbose", false, "Be more verbose")
+	useSyslog := flag.Bool("syslog", false, "Use syslog logging")
 
 	flag.Parse()
+
+	if *useSyslog {
+		slout, err := syslog.New(syslog.LOG_INFO, "udpovertcp")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: can not init syslog logger: %s\n", err)
+			os.Exit(1)
+		}
+		log.SetOutput(slout)
+	}
+	log.SetFlags(log.Ldate | log.Ltime)
 
 	if *listenAddr == "" && *connectAddr == "" {
 		fmt.Fprintf(os.Stderr, "Error: you need to specify one of -listen/-connect options.\n")
