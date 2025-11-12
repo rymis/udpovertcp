@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+build:
+	make
+
+clean:
+	make clean
+
+binary:
+	echo "Binary"
+	mkdir -p debian/udpovertcp/usr/bin
+	cp udpovertcp debian/udpovertcp/usr/bin/udpovertcp
+	dh_gencontrol
+	dh_builddeb

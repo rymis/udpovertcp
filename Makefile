@@ -1,5 +1,6 @@
 
 SUDO != test "x$$USER" = "xroot" || echo sudo
+PREFIX ?= /usr/local
 
 all: udpovertcp
 
@@ -10,9 +11,12 @@ test:
 	go test
 
 install: udpovertcp
-	$(SUDO) install -m 755 -o root udpovertcp /usr/local/bin
+	$(SUDO) install -m 755 -o root -D udpovertcp $(PREFIX)/bin/udpovertcp
 
 clean:
 	rm udpovertcp
+
+deb:
+	dpkg-buildpackage -b --no-sign
 
 .PHONY: all test install clean
